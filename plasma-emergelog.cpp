@@ -30,7 +30,7 @@
 emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet(parent,args)
 {
 	setAspectRatioMode(Plasma::IgnoreAspectRatio);
-	setBackgroundHints(TranslucentBackground);
+	setBackgroundHints(DefaultBackground);
 	resize(500, 200);
 }
 
@@ -42,6 +42,7 @@ void emergelog::init()
 {
 	painter = new emergelog_painter(this);
 	calculate_size();
+	painter->moveBy(contentsRect().x(),contentsRect().y());
 	document=painter->document();
 	stream = 0;
 	watcher = new QFileSystemWatcher(this);
@@ -56,7 +57,6 @@ void emergelog::init()
 }
 
 void emergelog::calculate_size(){
-	painter->moveBy(contentsRect().x(),contentsRect().y());
 	painter->setSize((int)contentsRect().width(),(int)contentsRect().height());
 }
 
