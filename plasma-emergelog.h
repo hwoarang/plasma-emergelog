@@ -26,7 +26,8 @@ class QFile;
 class QFileSystemWatcher;
 class QTextDocument;
 class emergelog_painter;
-
+class QTextCharFormat;
+class QPen;
 /* Main Class */
 
 class emergelog : public Plasma::Applet
@@ -51,6 +52,8 @@ class emergelog : public Plasma::Applet
 		QTextStream *stream;
 		QTextDocument *document;
 		emergelog_painter *painter;
+		QPen *pen;
+		QTextCharFormat *formater;
 };
 K_EXPORT_PLASMA_APPLET(emergelog, emergelog)
 #endif

@@ -18,8 +18,11 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QFile>
+#include <QBrush>
 #include <QFileSystemWatcher>
 #include <QTextDocument>
+#include <QTextCharFormat>
+#include <QPen>
 #include <QTextCursor>
 #include <QSizeF>
 #include <plasma/theme.h>
@@ -30,7 +33,7 @@
 emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet(parent,args)
 {
 	setAspectRatioMode(Plasma::IgnoreAspectRatio);
-	setBackgroundHints(DefaultBackground);
+	setBackgroundHints(StandardBackground);
 	resize(500, 200);
 }
 
@@ -45,6 +48,11 @@ void emergelog::init()
 	painter->moveBy(contentsRect().x(),contentsRect().y());
 	document=painter->document();
 	stream = 0;
+	QBrush *brush = new QBrush();
+	brush->setColor(Qt::yellow);
+	brush->setStyle(Qt::SolidPattern);
+	formater = new QTextCharFormat();
+	formater->setForeground(*brush);
 	watcher = new QFileSystemWatcher(this);
 	watcher->addPath(LOG);
 	file = new QFile(this);
@@ -76,10 +84,15 @@ void emergelog::process_data(){
 	QTextCursor cursor(document);
 	cursor.movePosition(QTextCursor::End);
 	cursor.beginEditBlock();
+	//QPainter *p;
 	QString tmp;
 	QStringList list;
 	QString data= stream->readAll();
 	list = data.split('\n', QString::SkipEmptyParts);
+	//p=new QPainter();
+	//p->setRenderHint(QPainter::TextAntialiasing);
+	//p->save();
+	//p->setPen(Qt::yellow);
 
 	/* read the block */
 	for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
@@ -88,12 +101,17 @@ void emergelog::process_data(){
 		}
 		/* do some regexp magic here for proper formatting */
 		tmp=list.at(i);
-		tmp.replace(QRegExp("^\\d{1,10}:  "), " ");
+		tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
+		tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
 		tmp.replace(QRegExp("::.*"), " ");
-		cursor.insertText(tmp);
+		tmp.replace(QRegExp("\\*\\*\\* "), " ");
+		tmp.replace(QRegExp(">>> "), " ");
+		tmp.replace(QRegExp("=== "),"  ");
+		cursor.insertText(tmp,*formater);
 	}
 	cursor.endEditBlock();
 	painter->update();
+	//p->restore();
 }
 
 #include "plasma-emergelog.moc"
