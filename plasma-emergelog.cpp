@@ -49,7 +49,7 @@ void emergelog::init()
 	document=painter->document();
 	stream = 0;
 	QBrush *brush = new QBrush();
-	brush->setColor(Qt::yellow);
+	brush->setColor(Qt::white);
 	brush->setStyle(Qt::SolidPattern);
 	formater = new QTextCharFormat();
 	formater->setForeground(*brush);
