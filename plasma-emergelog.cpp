@@ -35,7 +35,7 @@ emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet
 }
 
 emergelog::~emergelog(){
-	delete this;
+	delete stream;
 }
 
 void emergelog::init()
