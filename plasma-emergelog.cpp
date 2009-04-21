@@ -71,9 +71,13 @@ void emergelog::init()
 	formater = new QTextCharFormat();
 	formater->setForeground(*brush);
 	watcher = new QFileSystemWatcher(this);
-	watcher->addPath(LOG);
+	watcher->addPath(LOG);// monitor /var/log/emerge.log
 	file = new QFile(this);
+	/* Blocksize is the height of plasmoid */
 	document->setMaximumBlockCount((int) (contentsRect().height()));
+
+	/* 1st slot: when the file change, call display() again to renew contents 
+	 * 2nd slot: when the size change, adapt the contents */
 	QObject::connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(display()));
 	QObject::connect(this, SIGNAL(geometryChanged()), this, SLOT(calculate_size()));
 	
@@ -91,9 +95,13 @@ void emergelog::display()
 	delete stream;
 	file->close();
 	document->clear();
+
+	/* recreate the file . We have some I/O here but I ll try to avoid this in the future */
 	QString cmd = "tail -250 /var/log/emerge.log > "+log;
 	int i=system(cmd.toAscii().constData());
 	if(i)perror("Error");
+
+	/* open the file */
 	file->setFileName(log);
 	if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
 	stream = new QTextStream(file);
@@ -106,9 +114,12 @@ void emergelog::process_data(){
 	cursor.beginEditBlock();
 	QString tmp;
 	QStringList list;
+
+	/* Read all the file. It is not that bad since it is 250 lines so we dont waste much memory */
 	QString data= stream->readAll();
+	/* Create a list . Each element is a line from that file */
 	list = data.split('\n', QString::SkipEmptyParts);
-	/* read the block */
+	/* read the block BACKWARDS */
 	for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
 		if(cursor.position() != 0){
 			cursor.insertBlock();
@@ -121,6 +132,8 @@ void emergelog::process_data(){
 		tmp.replace(QRegExp("\\*\\*\\* "), " ");
 		tmp.replace(QRegExp(">>> "), " ");
 		tmp.replace(QRegExp("=== "),"  ");
+
+		/* Insert the text */
 		cursor.insertText(tmp,*formater);
 	}
 	cursor.endEditBlock();
