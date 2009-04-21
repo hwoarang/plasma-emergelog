@@ -18,6 +18,7 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QFile>
+#include <time.h>
 #include <QBrush>
 #include <QFileSystemWatcher>
 #include <QTextDocument>
@@ -39,17 +40,33 @@ emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet
 
 emergelog::~emergelog(){
 	delete stream;
+	QString cmd = "rm "+log;
+	int i=system(cmd.toAscii().constData());
+	if(i)perror("Error:");
 }
 
 void emergelog::init()
 {
+	/* Create random file for storring logs */
+	int mrand = 0;
+	srand( (time(NULL)*rand()));
+	mrand= rand()%256;
+	log = "/tmp/plasma-emergelog-tmp"+QString::number(mrand);
+
+	/* store a small part of the whole emerge.log fail. We dont need to read it all. 
+	 * It is huge and we need to respect memory */
+	QString cmd = "tail -250 /var/log/emerge.log > "+log;
+	int i=system(cmd.toAscii().constData());
+	if(i)perror("Error:");
+
 	painter = new emergelog_painter(this);
+	/* Measure size */
 	calculate_size();
 	painter->moveBy(contentsRect().x(),contentsRect().y());
 	document=painter->document();
 	stream = 0;
 	QBrush *brush = new QBrush();
-	brush->setColor(Qt::white);
+	brush->setColor(Qt::white);// Change this for different font color
 	brush->setStyle(Qt::SolidPattern);
 	formater = new QTextCharFormat();
 	formater->setForeground(*brush);
@@ -74,7 +91,10 @@ void emergelog::display()
 	delete stream;
 	file->close();
 	document->clear();
-	file->setFileName(LOG);
+	QString cmd = "tail -250 /var/log/emerge.log > "+log;
+	int i=system(cmd.toAscii().constData());
+	if(i)perror("Error");
+	file->setFileName(log);
 	if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
 	stream = new QTextStream(file);
 	process_data();
@@ -84,16 +104,10 @@ void emergelog::process_data(){
 	QTextCursor cursor(document);
 	cursor.movePosition(QTextCursor::End);
 	cursor.beginEditBlock();
-	//QPainter *p;
 	QString tmp;
 	QStringList list;
 	QString data= stream->readAll();
 	list = data.split('\n', QString::SkipEmptyParts);
-	//p=new QPainter();
-	//p->setRenderHint(QPainter::TextAntialiasing);
-	//p->save();
-	//p->setPen(Qt::yellow);
-
 	/* read the block */
 	for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
 		if(cursor.position() != 0){
@@ -111,7 +125,6 @@ void emergelog::process_data(){
 	}
 	cursor.endEditBlock();
 	painter->update();
-	//p->restore();
 }
 
 #include "plasma-emergelog.moc"

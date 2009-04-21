@@ -54,6 +54,7 @@ class emergelog : public Plasma::Applet
 		emergelog_painter *painter;
 		QPen *pen;
 		QTextCharFormat *formater;
+		QString log;
 };
 K_EXPORT_PLASMA_APPLET(emergelog, emergelog)
 #endif
