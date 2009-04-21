@@ -2,7 +2,7 @@
 Name=plasma-emergelog
 Comment=Emerge.log viewer
 Type=Service
-Icon=plasma-emergelog/plasma-emergelog.svg
+Icon=plasma-emergelog/plasma-emergelog.png
 ServiceTypes=Plasma/Applet
 X-KDE-Library=plasma_applet_emergelog
 X-KDE-PluginInfo-Author=Markos Chandras
