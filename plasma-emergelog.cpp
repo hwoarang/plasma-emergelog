@@ -128,13 +128,25 @@ void emergelog::process_data(){
 		tmp=list.at(i);
 		tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
 		tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
-		tmp.replace(QRegExp("::.*"), " ");
+		tmp.replace(QRegExp("::.*"), " Finished :-) ");
 		tmp.replace(QRegExp("\\*\\*\\* "), " ");
 		tmp.replace(QRegExp(">>> "), " ");
 		tmp.replace(QRegExp("=== "),"  ");
-
+		tmp.replace(QRegExp("Unmerging.*")," ");
+		tmp.replace(QRegExp("terminating.*")," ");
+		tmp.replace(QRegExp("exiting.*")," ");
+		tmp.replace(QRegExp(".*Merging.*")," ");
+		tmp.replace(QRegExp("AUTOCLEAN.*")," ");
+		tmp.replace(QRegExp(".*Cleaning.*")," ");
+		tmp.replace(QRegExp("unmerge success.*")," ");
 		/* Insert the text */
-		cursor.insertText(tmp,*formater);
+		//printf("***");
+		//printf("\nText: %s",tmp.toAscii().constData());
+		//printf("\nsize:%d\n",tmp.size());
+		if(tmp.size()>=10)cursor.insertText(tmp,*formater);
+		else {
+			if(cursor.position()>0) cursor.setPosition(cursor.position()-1);
+		}
 	}
 	cursor.endEditBlock();
 	painter->update();
