@@ -9,9 +9,7 @@ include_directories(
 	${CMAKE_BINARY_DIR}
 	${KDE4_INCLUDES}
 )
-
 set(emergelog_SRCS plasma-emergelog.cpp plasma-emergelog-painter.cpp)
-
 kde4_add_plugin(plasma_applet_emergelog ${emergelog_SRCS})
 
 target_link_libraries(plasma_applet_emergelog ${KDE4_PLASMA_LIBS} ${KDE4_KDEUI_LIBS})

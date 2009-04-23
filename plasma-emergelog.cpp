@@ -24,12 +24,26 @@
 #include <QTextDocument>
 #include <QTextCharFormat>
 #include <QPen>
+#include <QRadioButton>
 #include <QTextCursor>
+#include <QVBoxLayout>
 #include <QSizeF>
+#include <KConfigDialog>
+#include <KConfigGroup>
+#include <KMessageBox>
 #include <plasma/theme.h>
 #include "plasma-emergelog-painter.h"
+#include <exception>
+#include <iostream>
 
-#define LOG "/var/log/emerge.log"
+
+class myexception: public std::exception
+{
+	virtual const char* what() const throw()
+	{
+		return "Cannot read any log files";
+	}
+} myex;
 
 emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet(parent,args)
 {
@@ -40,6 +54,7 @@ emergelog::emergelog(QObject *parent, const QVariantList &args) : Plasma::Applet
 
 emergelog::~emergelog(){
 	delete stream;
+	delete pmConfig;
 	QString cmd = "rm "+log;
 	int i=system(cmd.toAscii().constData());
 	if(i)perror("Error:");
@@ -53,9 +68,29 @@ void emergelog::init()
 	mrand= rand()%256;
 	log = "/tmp/plasma-emergelog-tmp"+QString::number(mrand);
 
+	KConfigGroup globalCg = globalConfig();
+	logFile = globalCg.readEntry("logfile", "/var/log/paludis.log");
+	/* Need a fallback code when default value is wrong, otherwise plasma will crash !!!
+	 */
+	file= new QFile(this);
+	file->setFileName(logFile);
+	if(!file->exists()){
+		qDebug("/var/log/paludis.org doesnt exist. Falling back to emerge.log");
+		logFile="/var/log/emerge.log";
+		file->setFileName(logFile);
+		if(!file->exists()){
+			qDebug("/var/log/emerge.log doesnt exist. Falling back to pkgcore.log");
+			logFile="/var/log/emerge.log";
+			file->setFileName(logFile);
+			if(!file->exists()){
+				// this should never occur on 'working' gentoo systems :)
+				KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist.").arg(logFile));
+			}
+		}
+	}
 	/* store a small part of the whole emerge.log fail. We dont need to read it all. 
 	 * It is huge and we need to respect memory */
-	QString cmd = "tail -250 /var/log/emerge.log > "+log;
+	QString cmd = "tail -250 "+logFile+" > "+log;
 	int i=system(cmd.toAscii().constData());
 	if(i)perror("Error:");
 
@@ -69,10 +104,10 @@ void emergelog::init()
 	brush->setColor(Qt::white);// Change this for different font color
 	brush->setStyle(Qt::SolidPattern);
 	formater = new QTextCharFormat();
-	formater->setForeground(*brush);
+	formater->setForeground(*brush); 
 	watcher = new QFileSystemWatcher(this);
-	watcher->addPath(LOG);// monitor /var/log/emerge.log
-	file = new QFile(this);
+	watcher->addPath(logFile);// monitor the logfile (default: /var/log/emerge.log)
+	
 	/* Blocksize is the height of plasmoid */
 	document->setMaximumBlockCount((int) (contentsRect().height()));
 
@@ -97,7 +132,7 @@ void emergelog::display()
 	document->clear();
 
 	/* recreate the file . We have some I/O here but I ll try to avoid this in the future */
-	QString cmd = "tail -250 /var/log/emerge.log > "+log;
+	QString cmd = "tail -250 "+logFile+" > "+log;
 	int i=system(cmd.toAscii().constData());
 	if(i)perror("Error");
 
@@ -150,6 +185,60 @@ void emergelog::process_data(){
 	}
 	cursor.endEditBlock();
 	painter->update();
+}
+
+void emergelog::createConfigurationInterface(KConfigDialog *parent)
+{
+	if(!pmConfig)
+		pmConfig = new QWidget();
+	
+	portageButton = new QRadioButton(i18n("Portage"), pmConfig);
+	paludisButton = new QRadioButton(i18n("Paludis"), pmConfig);
+	pkgcoreButton = new QRadioButton(i18n("Pkgcore"), pmConfig);
+	
+	QVBoxLayout *layout = new QVBoxLayout(pmConfig);
+	layout->addWidget(portageButton);
+	layout->addWidget(paludisButton);
+	layout->addWidget(pkgcoreButton);
+	
+	pmConfig->setLayout(layout);
+	parent->addPage(pmConfig, i18n("Package mangler:"));
+	
+	if(logFile == "/var/log/emerge.log")
+		portageButton->setChecked(true);
+	else if(logFile == "/var/log/paludis.log")
+		paludisButton->setChecked(true);
+	else if(logFile == "/var/log/pkcore.log")
+		pkgcoreButton->setChecked(true);
+	
+	connect(parent, SIGNAL(applyClicked()), this, SLOT(configAccepted()));
+	connect(parent, SIGNAL(okClicked()), this, SLOT(configAccepted()));
+}
+
+void emergelog::configAccepted()
+{
+	KConfigGroup globalCg = globalConfig();
+	watcher->removePath(logFile);
+	
+	if(portageButton->isChecked()) 
+		logFile = "/var/log/emerge.log";
+	else if(paludisButton->isChecked())
+		logFile = "/var/log/paludis.log";
+	else if(pkgcoreButton->isChecked())
+		logFile = "/var/log/pkgcore.log";
+	
+	file->setFileName(logFile); // Use file temporarily so we can prevent the plasmoid from crashing if it doesn't exist
+	if(file->exists()) {
+		globalCg.writeEntry("logfile", logFile);
+	
+		emit configNeedsSaving();
+	} else {
+		KMessageBox::sorry(pmConfig,i18n("Blabla file %1 doesn't exist.").arg(logFile));
+		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
+	}
+	watcher->addPath(logFile);
+	painter->update();
+	display();
 }
 
 #include "plasma-emergelog.moc"

@@ -17,13 +17,14 @@
 
 /* basic includes */
 
+#include <QtCore/QPointer>
 #include <Plasma/Applet>
-//#include <QtCore/QFile>
-//#include <QtCore/QFileWatcher>
 
+class KConfigDialog;
 class QSizeF;
 class QFile;
 class QFileSystemWatcher;
+class QRadioButton;
 class QTextDocument;
 class emergelog_painter;
 class QTextCharFormat;
@@ -40,11 +41,15 @@ class emergelog : public Plasma::Applet
 		//void paintInterface(QPainter *painer, const QStyleOptionGraphicsItem *option, const QRect& contentsRect);
 		void init();
 		void process_data();
+        
+	protected:
+		void createConfigurationInterface(KConfigDialog *parent);
 
 	public slots:
 		void display();
 	private slots:
 		void calculate_size();
+		void configAccepted();
 
 	private:
 		QFileSystemWatcher *watcher;
@@ -53,8 +58,13 @@ class emergelog : public Plasma::Applet
 		QTextDocument *document;
 		emergelog_painter *painter;
 		QPen *pen;
+		QPointer<QWidget> pmConfig;
 		QTextCharFormat *formater;
+		QRadioButton *portageButton;
+		QRadioButton *paludisButton;
+		QRadioButton *pkgcoreButton;
 		QString log;
+		QString logFile;
 };
 K_EXPORT_PLASMA_APPLET(emergelog, emergelog)
 #endif
