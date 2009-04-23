@@ -92,7 +92,11 @@ void emergelog::init()
 	 * It is huge and we need to respect memory */
 	QString cmd = "tail -250 "+logFile+" > "+log;
 	int i=system(cmd.toAscii().constData());
-	if(i)perror("Error:");
+	if(i){
+		perror("Error:");
+		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
+		exit(1);
+	}
 
 	painter = new emergelog_painter(this);
 	/* Measure size */
@@ -176,9 +180,6 @@ void emergelog::process_data(){
 		tmp.replace(QRegExp(".*Cleaning.*")," ");
 		tmp.replace(QRegExp("unmerge success.*")," ");
 		/* Insert the text */
-		//printf("***");
-		//printf("\nText: %s",tmp.toAscii().constData());
-		//printf("\nsize:%d\n",tmp.size());
 		if(tmp.size()>=10)cursor.insertText(tmp,*formater);
 		else {
 			if(cursor.position()>0) cursor.setPosition(cursor.position()-1);
