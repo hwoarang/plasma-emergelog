@@ -1,0 +1,18 @@
+Install:
+
+1) cmake DCMAKE_INSTALL_PREFIX=/usr
+2) make
+3) make install
+
+You might need to run kbuildsycoca4 and restart plasma in order to be able to 
+add this plasmoid
+
+Uninstall:
+
+1) make uninstall
+
+Test it:
+
+Usefull to get some traceback when you encounter problems :)
+
+1) plasmoidviewer plasma_applet_emergelog
