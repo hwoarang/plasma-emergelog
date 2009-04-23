@@ -233,7 +233,7 @@ void emergelog::configAccepted()
 	
 		emit configNeedsSaving();
 	} else {
-		KMessageBox::sorry(pmConfig,i18n("Blabla file %1 doesn't exist.").arg(logFile));
+		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist.").arg(logFile));
 		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
 	}
 	watcher->addPath(logFile);
