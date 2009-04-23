@@ -163,7 +163,8 @@ void emergelog::process_data(){
 		tmp=list.at(i);
 		tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
 		tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
-		tmp.replace(QRegExp("::.*"), " Finished :-) ");
+		tmp.replace(QRegExp("::/.*"), " ");
+		tmp.replace(QRegExp(":::.*")," Finished");
 		tmp.replace(QRegExp("\\*\\*\\* "), " ");
 		tmp.replace(QRegExp(">>> "), " ");
 		tmp.replace(QRegExp("=== "),"  ");
