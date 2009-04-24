@@ -179,6 +179,7 @@ void emergelog::process_data(){
 		tmp.replace(QRegExp("AUTOCLEAN.*")," ");
 		tmp.replace(QRegExp(".*Cleaning.*")," ");
 		tmp.replace(QRegExp("unmerge success.*")," ");
+		tmp.replace(QRegExp(".*Compiling.*")," ");
 		/* Insert the text */
 		if(tmp.size()>=10)cursor.insertText(tmp,*formater);
 		else {
