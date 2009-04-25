@@ -72,6 +72,7 @@ void emergelog::init()
 	logFile = globalCg.readEntry("logfile", "/var/log/paludis.log");
 	/* Need a fallback code when default value is wrong, otherwise plasma will crash !!!
 	 */
+	stream = 0;
 	file= new QFile(this);
 	file->setFileName(logFile);
 	if(!file->exists()){
@@ -102,7 +103,6 @@ void emergelog::init()
 		calculate_size();
 		painter->moveBy(contentsRect().x(),contentsRect().y());
 		document=painter->document();
-		stream = 0;
 		QBrush *brush = new QBrush();
 		brush->setColor(Qt::white);// Change this for different font color
 		brush->setStyle(Qt::SolidPattern);
