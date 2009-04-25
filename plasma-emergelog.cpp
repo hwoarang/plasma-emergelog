@@ -95,33 +95,33 @@ void emergelog::init()
 	if(i){
 		perror("Error:");
 		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
-		~emegelog();
 	}
-
-	painter = new emergelog_painter(this);
-	/* Measure size */
-	calculate_size();
-	painter->moveBy(contentsRect().x(),contentsRect().y());
-	document=painter->document();
-	stream = 0;
-	QBrush *brush = new QBrush();
-	brush->setColor(Qt::white);// Change this for different font color
-	brush->setStyle(Qt::SolidPattern);
-	formater = new QTextCharFormat();
-	formater->setForeground(*brush); 
-	watcher = new QFileSystemWatcher(this);
-	watcher->addPath(logFile);// monitor the logfile (default: /var/log/emerge.log)
+	else{
+		painter = new emergelog_painter(this);
+		/* Measure size */
+		calculate_size();
+		painter->moveBy(contentsRect().x(),contentsRect().y());
+		document=painter->document();
+		stream = 0;
+		QBrush *brush = new QBrush();
+		brush->setColor(Qt::white);// Change this for different font color
+		brush->setStyle(Qt::SolidPattern);
+		formater = new QTextCharFormat();
+		formater->setForeground(*brush); 
+		watcher = new QFileSystemWatcher(this);
+		watcher->addPath(logFile);// monitor the logfile (default: /var/log/emerge.log)
 	
-	/* Blocksize is the height of plasmoid */
-	document->setMaximumBlockCount((int) (contentsRect().height()));
+		/* Blocksize is the height of plasmoid */
+		document->setMaximumBlockCount((int) (contentsRect().height()));
 
-	/* 1st slot: when the file change, call display() again to renew contents 
-	 * 2nd slot: when the size change, adapt the contents */
-	QObject::connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(display()));
-	QObject::connect(this, SIGNAL(geometryChanged()), this, SLOT(calculate_size()));
+		/* 1st slot: when the file change, call display() again to renew contents 
+		 * 2nd slot: when the size change, adapt the contents */
+		QObject::connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(display()));
+		QObject::connect(this, SIGNAL(geometryChanged()), this, SLOT(calculate_size()));
 	
-	painter->update();
-	display();
+		painter->update();
+		display();
+	}
 }
 
 void emergelog::calculate_size(){
