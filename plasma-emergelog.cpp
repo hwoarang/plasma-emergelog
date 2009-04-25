@@ -95,7 +95,7 @@ void emergelog::init()
 	if(i){
 		perror("Error:");
 		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
-		~emegelog()
+		~emegelog();
 	}
 
 	painter = new emergelog_painter(this);
