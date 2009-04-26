@@ -90,6 +90,17 @@ void emergelog::init()
 			}
 		}
 	}
+	painter = new emergelog_painter(this);
+	/* Measure size */
+	calculate_size();
+	painter->moveBy(contentsRect().x(),contentsRect().y());
+	document=painter->document();
+	QBrush *brush = new QBrush();
+	brush->setColor(Qt::white);// Change this for different font color
+	brush->setStyle(Qt::SolidPattern);
+	formater = new QTextCharFormat();
+	formater->setForeground(*brush); 
+	
 	/* store a small part of the whole emerge.log fail. We dont need to read it all. 
 	 * It is huge and we need to respect memory */
 	QString cmd = "tail -250 "+logFile+" > "+log;
@@ -97,18 +108,9 @@ void emergelog::init()
 	if(i){
 		perror("Error:");
 		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
+		valid = false;
 	}
 	else{
-		painter = new emergelog_painter(this);
-		/* Measure size */
-		calculate_size();
-		painter->moveBy(contentsRect().x(),contentsRect().y());
-		document=painter->document();
-		QBrush *brush = new QBrush();
-		brush->setColor(Qt::white);// Change this for different font color
-		brush->setStyle(Qt::SolidPattern);
-		formater = new QTextCharFormat();
-		formater->setForeground(*brush); 
 		watcher = new QFileSystemWatcher(this);
 		watcher->addPath(logFile);// monitor the logfile (default: /var/log/emerge.log)
 	
@@ -132,19 +134,24 @@ void emergelog::calculate_size(){
 void emergelog::display()
 {
 	/* close previous instances */
-	delete stream;
-	file->close();
-	document->clear();
+	if (valid){
+		delete stream;
+		file->close();
+		document->clear();
+	
 
-	/* recreate the file . We have some I/O here but I ll try to avoid this in the future */
-	QString cmd = "tail -250 "+logFile+" > "+log;
-	int i=system(cmd.toAscii().constData());
-	if(i)perror("Error");
+		/* recreate the file . We have some I/O here but I ll try to avoid this in the future */
+		QString cmd = "tail -250 "+logFile+" > "+log;
+		int i=system(cmd.toAscii().constData());
+		if(i)perror("Error");
 
-	/* open the file */
-	file->setFileName(log);
-	if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
-	stream = new QTextStream(file);
+		/* open the file */
+		file->setFileName(log);
+		if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
+		stream = new QTextStream(file);
+	}
+	else qDebug("Cannot read log file. A related error message should appear on widget!!");
+
 	process_data();
 }
 
@@ -191,9 +198,14 @@ void emergelog::process_data(){
 		painter->update();
 	}
 	else{
-		cursor.setPosition(5);
-		cursor.insertText("Cannot read "+logFile+". Please add you self to portage group first");
+		qDebug("Preparing error log text...");
+		if(cursor.position() != 0){
+			cursor.insertBlock();
+		}
+		cursor.insertText("Cannot read "+logFile+".\nPlease add your self to portage group first",*formater);
 	}
+	cursor.endEditBlock();
+	painter->update();
 }
 
 void emergelog::createConfigurationInterface(KConfigDialog *parent)
@@ -227,7 +239,7 @@ void emergelog::createConfigurationInterface(KConfigDialog *parent)
 void emergelog::configAccepted()
 {
 	KConfigGroup globalCg = globalConfig();
-	watcher->removePath(logFile);
+	if(valid) watcher->removePath(logFile);
 	
 	if(portageButton->isChecked()) 
 		logFile = "/var/log/emerge.log";
@@ -237,21 +249,37 @@ void emergelog::configAccepted()
 		logFile = "/var/log/pkgcore.log";
 	
 	file->setFileName(logFile); // Use file temporarily so we can prevent the plasmoid from crashing if it doesn't exist
+	qDebug("Validating configuration...");
 	if(file->exists()) {
+		qDebug("Log file found. Validating permissions...");
 		globalCg.writeEntry("logfile", logFile);
 		// ok it exists. But can we open it?
 		if(!file->open(QIODevice::ReadOnly | QIODevice::Text)){
 			KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
-		valid = false;
+			valid = false;
+		}
+		else {
+			valid = true;
+			watcher->addPath(logFile);
+		}
+
+		file->close();
+		emit configNeedsSaving();
+	} 
+	else {
+		qDebug("File doesnt exist. Using emerge.log fallback");
+		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist. Emerge.log will be used instead").arg(logFile));
+		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
+		// again we need to check permissions
+		file->setFileName(logFile);
+		if(!file->open(QIODevice::ReadOnly | QIODevice::Text)){
+			KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
+			valid = false;
 		}
 		else valid = true;
+		file->close();
 		emit configNeedsSaving();
-	} else {
-		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist.").arg(logFile));
-		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
-		valid = true;
 	}
-	watcher->addPath(logFile);
 	painter->update();
 	display();
 }
