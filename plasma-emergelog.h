@@ -46,7 +46,8 @@ class emergelog : public Plasma::Applet
 		void createConfigurationInterface(KConfigDialog *parent);
 
 	public slots:
-		void display();
+		bool valid;
+		void display(bool valid);
 	private slots:
 		void calculate_size();
 		void configAccepted();

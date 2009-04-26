@@ -62,6 +62,7 @@ emergelog::~emergelog(){
 
 void emergelog::init()
 {
+	valid = false;
 	/* Create random file for storring logs */
 	int mrand = 0;
 	srand( (time(NULL)*rand()));
@@ -96,6 +97,7 @@ void emergelog::init()
 	if(i){
 		perror("Error:");
 		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
+		display(valid);
 	}
 	else{
 		painter = new emergelog_painter(this);
@@ -118,9 +120,9 @@ void emergelog::init()
 		 * 2nd slot: when the size change, adapt the contents */
 		QObject::connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(display()));
 		QObject::connect(this, SIGNAL(geometryChanged()), this, SLOT(calculate_size()));
-	
+		valid = true;
 		painter->update();
-		display();
+		display(valid);
 	}
 }
 
@@ -128,7 +130,7 @@ void emergelog::calculate_size(){
 	painter->setSize((int)contentsRect().width(),(int)contentsRect().height());
 }
 
-void emergelog::display()
+void emergelog::display(valid)
 {
 	/* close previous instances */
 	delete stream;
@@ -144,7 +146,7 @@ void emergelog::display()
 	file->setFileName(log);
 	if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
 	stream = new QTextStream(file);
-	process_data();
+	process_data(valid);
 }
 
 void emergelog::process_data(){
@@ -153,41 +155,46 @@ void emergelog::process_data(){
 	cursor.beginEditBlock();
 	QString tmp;
 	QStringList list;
-
-	/* Read all the file. It is not that bad since it is 250 lines so we dont waste much memory */
-	QString data= stream->readAll();
-	/* Create a list . Each element is a line from that file */
-	list = data.split('\n', QString::SkipEmptyParts);
-	/* read the block BACKWARDS */
-	for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
-		if(cursor.position() != 0){
-			cursor.insertBlock();
+	if (valid){
+		/* Read all the file. It is not that bad since it is 250 lines so we dont waste much memory */
+		QString data= stream->readAll();
+		/* Create a list . Each element is a line from that file */
+		list = data.split('\n', QString::SkipEmptyParts);
+		/* read the block BACKWARDS */
+		for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
+			if(cursor.position() != 0){
+				cursor.insertBlock();
+			}
+			/* do some regexp magic here for proper formatting */
+			tmp=list.at(i);
+			tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
+			tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
+			tmp.replace(QRegExp("::/.*"), " ");
+			tmp.replace(QRegExp(":::.*")," Finished ;-)");
+			tmp.replace(QRegExp("\\*\\*\\* "), " ");
+			tmp.replace(QRegExp(">>> "), " ");
+			tmp.replace(QRegExp("=== "),"  ");
+			tmp.replace(QRegExp("Unmerging.*")," ");
+			tmp.replace(QRegExp("terminating.*")," ");
+			tmp.replace(QRegExp("exiting.*")," ");
+			tmp.replace(QRegExp(".*Merging.*")," ");
+			tmp.replace(QRegExp("AUTOCLEAN.*")," ");
+			tmp.replace(QRegExp(".*Cleaning.*")," ");
+			tmp.replace(QRegExp("unmerge success.*")," ");
+			tmp.replace(QRegExp(".*Compiling.*")," ");
+			/* Insert the text */
+			if(tmp.size()>=10)cursor.insertText(tmp,*formater);
+			else {
+				if(cursor.position()>0) cursor.setPosition(cursor.position()-1);
+			}	
 		}
-		/* do some regexp magic here for proper formatting */
-		tmp=list.at(i);
-		tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
-		tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
-		tmp.replace(QRegExp("::/.*"), " ");
-		tmp.replace(QRegExp(":::.*")," Finished ;-)");
-		tmp.replace(QRegExp("\\*\\*\\* "), " ");
-		tmp.replace(QRegExp(">>> "), " ");
-		tmp.replace(QRegExp("=== "),"  ");
-		tmp.replace(QRegExp("Unmerging.*")," ");
-		tmp.replace(QRegExp("terminating.*")," ");
-		tmp.replace(QRegExp("exiting.*")," ");
-		tmp.replace(QRegExp(".*Merging.*")," ");
-		tmp.replace(QRegExp("AUTOCLEAN.*")," ");
-		tmp.replace(QRegExp(".*Cleaning.*")," ");
-		tmp.replace(QRegExp("unmerge success.*")," ");
-		tmp.replace(QRegExp(".*Compiling.*")," ");
-		/* Insert the text */
-		if(tmp.size()>=10)cursor.insertText(tmp,*formater);
-		else {
-			if(cursor.position()>0) cursor.setPosition(cursor.position()-1);
-		}
+		cursor.endEditBlock();
+		painter->update();
 	}
-	cursor.endEditBlock();
-	painter->update();
+	else{
+		cursor.setPosition(5);
+		cursor.insertText("Cannot read "+logFile+". Please add you self to portage group first")
+	}
 }
 
 void emergelog::createConfigurationInterface(KConfigDialog *parent)
@@ -233,15 +240,16 @@ void emergelog::configAccepted()
 	file->setFileName(logFile); // Use file temporarily so we can prevent the plasmoid from crashing if it doesn't exist
 	if(file->exists()) {
 		globalCg.writeEntry("logfile", logFile);
-	
+		valid = true;
 		emit configNeedsSaving();
 	} else {
 		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist.").arg(logFile));
 		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
+		valid = true;
 	}
 	watcher->addPath(logFile);
 	painter->update();
-	display();
+	display(valid);
 }
 
 #include "plasma-emergelog.moc"
