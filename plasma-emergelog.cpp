@@ -240,7 +240,12 @@ void emergelog::configAccepted()
 	file->setFileName(logFile); // Use file temporarily so we can prevent the plasmoid from crashing if it doesn't exist
 	if(file->exists()) {
 		globalCg.writeEntry("logfile", logFile);
-		valid = true;
+		// ok it exists. But can we open it?
+		if(!file->open(QIODevice::ReadOnly | QIODevice::Text)){
+			KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
+		valid = false;
+		}
+		else valid = true;
 		emit configNeedsSaving();
 	} else {
 		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist.").arg(logFile));

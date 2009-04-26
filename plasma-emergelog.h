@@ -41,12 +41,12 @@ class emergelog : public Plasma::Applet
 		//void paintInterface(QPainter *painer, const QStyleOptionGraphicsItem *option, const QRect& contentsRect);
 		void init();
 		void process_data();
+		bool valid;
         
 	protected:
 		void createConfigurationInterface(KConfigDialog *parent);
 
 	public slots:
-		bool valid;
 		void display(bool valid);
 	private slots:
 		void calculate_size();
