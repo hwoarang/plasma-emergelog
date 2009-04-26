@@ -97,7 +97,6 @@ void emergelog::init()
 	if(i){
 		perror("Error:");
 		KMessageBox::error(pmConfig,i18n("Permission denied: Cannot open %1. Did you add your self to portage group?").arg(logFile));
-		display(valid);
 	}
 	else{
 		painter = new emergelog_painter(this);
@@ -121,9 +120,9 @@ void emergelog::init()
 		QObject::connect(watcher, SIGNAL(fileChanged(QString)), this, SLOT(display()));
 		QObject::connect(this, SIGNAL(geometryChanged()), this, SLOT(calculate_size()));
 		valid = true;
-		painter->update();
-		display(valid);
 	}
+	painter->update();
+	display();
 }
 
 void emergelog::calculate_size(){
