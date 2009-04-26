@@ -192,7 +192,7 @@ void emergelog::process_data(){
 	}
 	else{
 		cursor.setPosition(5);
-		cursor.insertText("Cannot read "+logFile+". Please add you self to portage group first")
+		cursor.insertText("Cannot read "+logFile+". Please add you self to portage group first");
 	}
 }
 
