@@ -130,7 +130,7 @@ void emergelog::calculate_size(){
 	painter->setSize((int)contentsRect().width(),(int)contentsRect().height());
 }
 
-void emergelog::display(valid)
+void emergelog::display()
 {
 	/* close previous instances */
 	delete stream;
@@ -146,7 +146,7 @@ void emergelog::display(valid)
 	file->setFileName(log);
 	if(!file->open(QIODevice::ReadOnly | QIODevice::Text)) i18n("Could not open log file");
 	stream = new QTextStream(file);
-	process_data(valid);
+	process_data();
 }
 
 void emergelog::process_data(){
@@ -254,7 +254,7 @@ void emergelog::configAccepted()
 	}
 	watcher->addPath(logFile);
 	painter->update();
-	display(valid);
+	display();
 }
 
 #include "plasma-emergelog.moc"
