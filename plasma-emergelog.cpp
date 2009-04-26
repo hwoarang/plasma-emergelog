@@ -194,8 +194,6 @@ void emergelog::process_data(){
 				if(cursor.position()>0) cursor.setPosition(cursor.position()-1);
 			}	
 		}
-		cursor.endEditBlock();
-		painter->update();
 	}
 	else{
 		qDebug("Preparing error log text...");
