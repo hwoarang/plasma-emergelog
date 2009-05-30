@@ -171,23 +171,25 @@ void emergelog::process_data(){
 			if(cursor.position() != 0){
 				cursor.insertBlock();
 			}
-			/* do some regexp magic here for proper formatting */
 			tmp=list.at(i);
-			tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
-			tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
-			tmp.replace(QRegExp("::/.*"), " ");
-			tmp.replace(QRegExp(":::.*")," Finished ;-)");
-			tmp.replace(QRegExp("\\*\\*\\* "), " ");
-			tmp.replace(QRegExp(">>> "), " ");
-			tmp.replace(QRegExp("=== "),"  ");
-			tmp.replace(QRegExp("Unmerging.*")," ");
-			tmp.replace(QRegExp("terminating.*")," ");
-			tmp.replace(QRegExp("exiting.*")," ");
-			tmp.replace(QRegExp(".*Merging.*")," ");
-			tmp.replace(QRegExp("AUTOCLEAN.*")," ");
-			tmp.replace(QRegExp(".*Cleaning.*")," ");
-			tmp.replace(QRegExp("unmerge success.*")," ");
-			tmp.replace(QRegExp(".*Compiling.*")," ");
+			/* do some regexp magic here for proper formatting ( applies only on portage so far )*/
+			if(logFile == "/var/log/emerge.log"){
+				tmp.replace(QRegExp("^\\d{1,10}:\\s{1,3}"), " ");
+				tmp.replace(QRegExp("^\\s{1,3}S"),"  S");
+				tmp.replace(QRegExp("::/.*"), " ");
+				tmp.replace(QRegExp(":::.*")," Finished ;-)");
+				tmp.replace(QRegExp("\\*\\*\\* "), " ");
+				tmp.replace(QRegExp(">>> "), " ");
+				tmp.replace(QRegExp("=== "),"  ");
+				tmp.replace(QRegExp("Unmerging.*")," ");
+				tmp.replace(QRegExp("terminating.*")," ");
+				tmp.replace(QRegExp("exiting.*")," ");
+				tmp.replace(QRegExp(".*Merging.*")," ");
+				tmp.replace(QRegExp("AUTOCLEAN.*")," ");
+				tmp.replace(QRegExp(".*Cleaning.*")," ");
+				tmp.replace(QRegExp("unmerge success.*")," ");
+				tmp.replace(QRegExp(".*Compiling.*")," ");
+			}
 			/* Insert the text */
 			if(tmp.size()>=10)cursor.insertText(tmp,*formater);
 			else {
