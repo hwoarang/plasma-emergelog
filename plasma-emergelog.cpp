@@ -268,6 +268,8 @@ void emergelog::configAccepted()
 	} 
 	else {
 		qDebug("File doesnt exist. Using emerge.log fallback");
+		//ensure correct settings ( just for testing :/ )
+		globalCg.writeEntry("logfile", "/var/log/emerge.log");
 		KMessageBox::error(pmConfig,i18n("The file %1 doesn't exist. Emerge.log will be used instead").arg(logFile));
 		logFile = globalCg.readEntry("logfile", "/var/log/emerge.log");
 		// again we need to check permissions
