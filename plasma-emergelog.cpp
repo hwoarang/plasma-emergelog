@@ -35,6 +35,7 @@
 #include "plasma-emergelog-painter.h"
 #include <exception>
 #include <iostream>
+#include <cmath>
 
 
 class myexception: public std::exception
@@ -167,7 +168,7 @@ void emergelog::process_data(){
 		/* Create a list . Each element is a line from that file */
 		list = data.split('\n', QString::SkipEmptyParts);
 		/* read the block BACKWARDS */
-		for (int i=list.size()-1;i>(list.size()-(document->maximumBlockCount()));i--){
+		for (int i=list.size()-1;i>std::max<int>(0, list.size()-(document->maximumBlockCount()));i--){
 			if(cursor.position() != 0){
 				cursor.insertBlock();
 			}
